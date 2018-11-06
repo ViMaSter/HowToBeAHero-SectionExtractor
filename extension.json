@@ -1,0 +1,25 @@
+{
+	"name": "Section Extractor",
+	"version": "0.1.0",
+	"author": [
+		"Vincent Mahnke"
+	],
+	"url": "https://github.com/ViMaSter/HowToBeAHero-WikiToPdf-MediawikiIntegration",
+	"descriptionmsg": "pdfparserintegration-desc",
+	"license-name": "GPL-3.0-or-later",
+	"type": "other",
+	"Hooks": {
+		"ParserFirstCallInit": [
+			"SectionExtractor\\Hooks::OnParserFirstCallInit"
+		]
+	},
+	"MessagesDirs": {
+		"PDFParser": [
+			"i18n"
+		]
+	},
+	"AutoloadClasses": {
+		"SectionExtractor\\Hooks": "SectionExtractor.Hooks.class.php"
+	},
+	"manifest_version": 1
+}
