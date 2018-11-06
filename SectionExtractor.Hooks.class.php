@@ -1,37 +1,55 @@
 <?php
 
-namespace SectionExtractor {
-	class Hooks
+	class Hookks
 	{
-		public static function OnParserFirstCallInit( Parser &$parser ) {
-			$parser->setFunctionHook( "SectionExtractor", Hooks::GetSectionTitles, Parser::SFH_OBJECT_ARGS );
-		}
-
-		public static function GetSectionTitles()
+		public static function ArgumentsToTitles($arguments)
 		{
-			return [""];
-		}
-	}
-
-	protected static function perform_while( Parser &$parser, $frame, $args, $dowhile = false ) {
-		// #(do)while: | condition | code
-		$rawCond = isset( $args[1] ) ? $args[1] : ''; // unexpanded condition
-		$rawCode = isset( $args[2] ) ? $args[2] : ''; // unexpanded loop code
-		if(
-			$dowhile === false
-			&& trim( $frame->expand( $rawCond ) ) === ''
-		) {
-			// while, but condition not fullfilled from the start
-			return '';
-		}
-		$output = '';
-		do {
-			// limit check:
-			if( ! self::incrCounter( $parser ) ) {
-				return self::msgLoopsLimit( $output );
+			$result[] = $arguments[0];
+			for($i = 1; $i < count($arguments); $i++)
+			{
+				$result[] = $arguments[$i]->node->nodeValue;
 			}
-			$output .= trim( $frame->expand( $rawCode ) );
-		} while( trim( $frame->expand( $rawCond ) ) );
-		return $output;
+			return $result;
+		}
+		public static function GetSectionTitles($input, \PPFrame_DOM $frame, $arguments)
+		{
+			$requestedTitles = static::ArgumentsToTitles($arguments);
+
+			$sections = [];
+			foreach ($requestedTitles as $title)
+			{
+				$sections[] = static::GetSectionsByTitle($title);
+			}
+
+			return print_r($sections, true);
+		}
+
+		public static function OnParserFirstCallInit( \Parser &$parser )
+		{
+			$parser->setFunctionHook( "SectionExtractor", "Hookks::GetSectionTitles", \Parser::SFH_OBJECT_ARGS);
+		}
+
+		public static function GetSectionsByTitle( string $title )
+		{
+			$titleObj = Title::newFromText($title);
+			$wikipage = WikiPage::factory($titleObj);
+
+			if ($wikipage->getContent() == null)
+			{
+				return [];
+			}
+
+			$text = $wikipage->getContent()->getNativeData();
+
+			$newParser = new Parser();
+			$parserOutput = $newParser->parse($text,$titleObj,new ParserOptions());
+
+			$output = [];
+			foreach ($parserOutput->getSections() as $keySection=>$valueSection)
+			{
+				$output[] = $valueSection;
+			}
+
+			return $output;
+		}
 	}
-}
