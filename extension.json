@@ -10,7 +10,7 @@
 	"type": "parserhook",
 	"Hooks": {
 		"ParserFirstCallInit": [
-			"Hookks::OnParserFirstCallInit"
+			"SectionExtractorHooks::OnParserFirstCallInit"
 		]
 	},
 	"MessagesDirs": {
@@ -19,7 +19,7 @@
 		]
 	},
 	"AutoloadClasses": {
-		"Hookks": "SectionExtractor.Hooks.class.php"
+		"SectionExtractorHooks": "SectionExtractor.Hooks.class.php"
 	},
 	"ExtensionMessagesFiles": {
 		"SectionExtractorMagic": "SectionExtractor.i18n.php"
