@@ -87,7 +87,7 @@
 
 			$title = Title::newFromText( $requestedTitle );
 
-			if (!SectionExtractorHooks::pageExists($requestedTitle, $title))
+			if (!$title || !SectionExtractorHooks::pageExists($requestedTitle, $title))
 			{
 				return $requestedTitle . " " . wfMessage("sectionextractor-notfound");
 			}
