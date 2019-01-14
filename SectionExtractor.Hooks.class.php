@@ -2,6 +2,45 @@
 
 	class SectionExtractorHooks
 	{
+		// Borrowed from https://github.com/wikimedia/mediawiki-extensions-ParserFunctions/blob/cf1480cb9629514dd4400b1b83283ae6c83ff163/includes/ExtParserFunctions.php#L314
+		public static function pageExists(string $titleText, Title $title)
+		{
+			global $wgContLang;
+			$wgContLang->findVariantLink( $titletext, $title, true );
+			if ( $title )
+			{
+					if ( $title->getNamespace() === NS_SPECIAL )
+					{
+						return SpecialPageFactory::exists( $title->getDBkey() ) ? true : false;
+					}
+					elseif ( $title->isExternal() )
+					{
+						return false;
+					}
+					else
+					{
+						$pdbk = $title->getPrefixedDBkey();
+						$lc = LinkCache::singleton();
+						$id = $lc->getGoodLinkID( $pdbk );
+						if ( $id !== 0 )
+						{
+							return true;
+						}
+						elseif ( $lc->isBadLink( $pdbk ) )
+						{
+							return false;
+						}
+						$id = $title->getArticleID();
+
+						if ( $title->exists() )
+						{
+							return true;
+						}
+					}
+			}
+			return false;
+		}
+		
 		public static function ArgumentsToTitles($arguments)
 		{
 			$result[] = $arguments[0];
@@ -19,8 +58,12 @@
 
 			$output = $titlePrepend . $title . $titleAppend;
 			$output .= $pagePrepend;
-			foreach ($headlines as $headline)
+			foreach ($headlines as $key => $headline)
 			{
+				if (!is_numeric($key))
+				{	
+					continue;
+				}
 				$printedHeadline = $withNumber ? $headline["number"] . " " . $headline["line"] : $headline["line"];
 
 				$output .=	$headlinePrepend .
@@ -42,15 +85,16 @@
 			$headlinePrepend	= $arguments[6] ? $arguments[6]->node->nodeValue 	: "<div class='headline'>";
 			$headlineAppend		= $arguments[7] ? $arguments[7]->node->nodeValue 	: "</div>";
 
-			$titleObj = Title::newFromText($requestedTitle);
-			if (!$titleObj)
+			$title = Title::newFromText( $requestedTitle );
+
+			if (!SectionExtractorHooks::pageExists($requestedTitle, $title))
 			{
-				return $requestedTitle . " cannot be found!";
+				return $requestedTitle . " " . wfMessage("sectionextractor-notfound");
 			}
 
 			return static::FormatTitle(
-				$titleObj->getText(),
-				static::GetSectionsByTitle($titleObj),
+				$title->getText(),
+				static::GetSectionsByTitle($requestedTitle),
 				$withNumber,
 				$pagePrepend,
 				$pageAppend,
@@ -67,27 +111,26 @@
 			$parser->setFunctionHook( "SectionExtractor", "SectionExtractorHooks::GetSectionTitles", \Parser::SFH_OBJECT_ARGS);
 		}
 
-		public static function GetSectionsByTitle( \Title $titleObj )
+		public static function GetSectionsByTitle( string $title )
 		{
-			$wikipage = WikiPage::factory($titleObj);
+			global $wgParser;
+			$backupParser = $wgParser;
+			$wgParser = new Parser();
 
-			if ($wikipage->getContent() == null)
-			{
-				return [];
-			}
+			$apiRequest = new FauxRequest( array(
+				'action' => 'parse',
+				'page' => urldecode($title),
+				'prop' => 'sections'
+			) );
+			
+			$context = new DerivativeContext( new RequestContext() );
+			$context->setRequest( $apiRequest );
+			$api = new ApiMain( $context, true );
+			$api->execute();
+			$result = $api->getResult();
 
-			$text = $wikipage->getContent()->getNativeData();
+			$wgParser = $backupParser;
 
-			$newParser = new Parser();
-			$parserOutput = $newParser->parse($text,$titleObj,new ParserOptions());
-
-			$output = [];
-			$sections = $parserOutput->getSections();
-			foreach ($sections as $keySection=>$valueSection)
-			{
-				$output[] = $valueSection;
-			}
-
-			return $output;
+			return $result->getResultData()["parse"]["sections"];
 		}
 	}

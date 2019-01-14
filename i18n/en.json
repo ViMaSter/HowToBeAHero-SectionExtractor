@@ -4,5 +4,6 @@
 			"Vincent Mahnke"
 		]
 	},
-	"sectionextractor-desc": "Allows users to display a formatted list of headlines inside an article inside another article."
+	"sectionextractor-desc": "Allows users to display a formatted list of headlines inside an article inside another article.",
+	"sectionextractor-notfound": "could not be found"
 }

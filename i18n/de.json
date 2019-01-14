@@ -4,5 +4,6 @@
 			"Vincent Mahnke"
 		]
 	},
-	"sectionextractor-desc": "Erlaubt Nutzern das Einbinden aller Überschriften eines Artikels (in formatierten Form) in einen anderen."
+	"sectionextractor-desc": "Erlaubt Nutzern das Einbinden aller Überschriften eines Artikels (in formatierten Form) in einen anderen.",
+	"sectionextractor-notfound": "konnte nicht gefunden werden"
 }
